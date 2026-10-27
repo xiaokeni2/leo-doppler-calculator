@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEO Doppler Calculator | Satellite Doppler Shift &amp; Doppler Rate for LEO Passes</title>
+<meta name="description" content="Free online LEO satellite Doppler calculator. Enter orbit altitude, downlink frequency and maximum elevation to get maximum Doppler shift, maximum Doppler rate, orbital velocity, period and pass duration — with a 400–1200 km altitude comparison table for UHF, S, X and Ku band ground station design.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "LEO Doppler Calculator",
+  "url": "https://xiaokeni2.github.io/leo-doppler-calculator/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "author": {
+    "@type": "Organization",
+    "name": "BRIDZA",
+    "url": "https://rf.bridza.com/"
+  },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Calculate maximum Doppler shift and Doppler rate for LEO satellite passes from altitude, downlink frequency and maximum elevation, with an altitude comparison table. Free satellite ground station tool by BRIDZA."
+}
+</script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --ok: #3fb950;
+    --error: #f85149;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    padding: 0 16px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header { padding: 20px 0 8px; border-bottom: 1px solid var(--border); }
+  header .brand { color: var(--accent); font-family: var(--mono); font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+  h1 { font-size: 24px; margin: 12px 0 6px; color: #f0f6fc; }
+  .intro { color: var(--muted); font-size: 15px; margin-bottom: 8px; }
+  main { padding: 20px 0 32px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 16px; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    padding: 10px 12px;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field .unit { color: var(--muted); font-size: 12px; font-family: var(--mono); margin-top: 4px; display: block; }
+  .results { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+  .results .metric { font-family: var(--mono); font-size: 14px; margin: 5px 0; }
+  .results .metric b { color: var(--accent); font-weight: 600; font-size: 16px; }
+  .results .metric b.big { font-size: 20px; color: var(--ok); }
+  .curve { margin-top: 16px; }
+  .curve svg { width: 100%; height: auto; display: block; background: var(--bg); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: right; }
+  th { background: #1c2129; color: var(--accent); font-weight: 600; }
+  td:first-child, th:first-child { text-align: left; }
+  .formulas { font-family: var(--mono); font-size: 14px; color: var(--text); }
+  .formulas li { margin: 6px 0 6px 18px; }
+  .prose p, .prose li { font-size: 14.5px; color: var(--text); }
+  .prose ul, .prose ol { margin: 8px 0 8px 22px; }
+  .prose li { margin: 5px 0; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+  footer { border-top: 1px solid var(--border); padding: 16px 0 28px; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer ul { list-style: none; margin-top: 8px; }
+  footer li { margin: 4px 0; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">BRIDZA · RF Engineering Tools</div>
+  <h1>LEO Doppler Calculator</h1>
+  <p class="intro">Circular-orbit LEO Doppler: enter altitude, downlink frequency and maximum (culmination) elevation to get the maximum Doppler shift at acquisition, the peak Doppler rate near culmination, orbital velocity, period and pass duration — plus a 400–1200 km comparison table for UHF / S / X / Ku band receiver planning.</p>
+</header>
+
+<main>
+  <section class="panel" aria-label="LEO Doppler calculator">
+    <h2>Calculator</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="alt">Orbit altitude h (circular)</label>
+        <select id="alt">
+          <option value="400">400 km — very low LEO</option>
+          <option value="550" selected>550 km — typical LEO (Starlink class)</option>
+          <option value="600">600 km</option>
+          <option value="800">800 km — sun-synchronous class</option>
+          <option value="1200">1200 km — higher LEO</option>
+        </select>
+        <span class="unit">or type a custom value</span>
+        <input type="number" id="altCustom" inputmode="decimal" step="any" min="100" max="2000" placeholder="custom km (overrides)" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="freq">Downlink carrier frequency</label>
+        <select id="freq">
+          <option value="437">UHF 437 MHz (amateur smallsat)</option>
+          <option value="2200" selected>S band 2200 MHz</option>
+          <option value="8100">X band 8100 MHz (EO downlink)</option>
+          <option value="12000">Ku band 12000 MHz</option>
+        </select>
+        <span class="unit">or type a custom value</span>
+        <input type="number" id="freqCustom" inputmode="decimal" step="any" min="1" placeholder="custom MHz (overrides)" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="emax">Maximum (culmination) elevation</label>
+        <input type="number" id="emax" inputmode="decimal" step="any" min="5" max="90" value="90" autocomplete="off">
+        <span class="unit">degrees, 5–90 — affects rate &amp; pass length</span>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="metric">Max Doppler shift Δf<sub>max</sub> (at horizon acquisition/loss): <b class="big" id="dfmax">—</b></div>
+      <div class="metric">Tuning span required (±Δf<sub>max</sub>): <b id="span">—</b></div>
+      <div class="metric">Peak Doppler rate (at culmination): <b id="rate">—</b></div>
+      <div class="metric">Orbital velocity v: <b id="vel">—</b> · Period T: <b id="per">—</b> · Pass duration (above 0°): <b id="pass">—</b></div>
+      <div class="metric">Radial velocity at horizon: <b id="vrad">—</b> · Slant range at culmination: <b id="rho">—</b></div>
+      <div class="curve" id="curveBox"></div>
+      <div id="status" role="alert" style="min-height:18px;margin-top:10px;font-family:var(--mono);font-size:13px;color:var(--error);"></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Altitude comparison">
+    <h2>Altitude comparison (at the selected frequency &amp; max elevation)</h2>
+    <table>
+      <thead>
+        <tr><th>h (km)</th><th>v (km/s)</th><th>T (min)</th><th>Δf<sub>max</sub></th><th>Peak rate</th><th>Pass (min)</th></tr>
+      </thead>
+      <tbody id="cmpBody"></tbody>
+    </table>
+    <p class="note">Δf<sub>max</sub> is the Doppler shift when the satellite crosses the horizon (maximum radial velocity). The peak Doppler rate occurs at culmination. A 550 km pass at UHF sweeps roughly ±10 kHz at up to ~100 Hz/s — that is why LEO ground stations need continuous frequency tracking, while GEO satellites need almost none.</p>
+  </section>
+
+  <section class="panel" aria-label="Formulas">
+    <h2>Formulas &amp; derivation summary</h2>
+    <ul class="formulas">
+      <li>r = R<sub>E</sub> + h, with R<sub>E</sub> = 6371 km, μ = 3.986004418×10¹⁴ m³/s²</li>
+      <li>v = √(μ/r) · T = 2π√(r³/μ) · n = v/r (orbital rate)</li>
+      <li>Geometry (ground station at zenith angle): ρ² = R² + r² − 2Rr·cosψ</li>
+      <li>cosψ = [ R·cos²E + sinE·√(r² − R²cos²E) ] / r&nbsp;&nbsp;(E = elevation)</li>
+      <li>Radial velocity: v<sub>rad</sub> = v·R·sinψ / ρ (approach = positive)</li>
+      <li>Max radial velocity at E = 0°: v<sub>rad,max</sub> = v·R/r (since ρ = √(r²−R²) there)</li>
+      <li>Δf = f<sub>c</sub>·v<sub>rad</sub>/c → Δf<sub>max</sub> = f<sub>c</sub>·v·(R/r)/c</li>
+      <li>Doppler rate: dΔf/dt = (f<sub>c</sub>/c)·v·n·(R/r)·g(ψ)/A(ψ)^(3/2), peak at culmination</li>
+      <li>&nbsp;&nbsp;&nbsp;A(ψ) = 1 + (R/r)² − 2(R/r)cosψ, g(ψ) = (1+(R/r)²)cosψ − (R/r)cos²ψ − (R/r)</li>
+      <li>Pass duration above horizon: T<sub>pass</sub> = 2·(arccos(R/r) − ψ<sub>culm</sub>)/n</li>
+    </ul>
+    <p class="note">The often-quoted rough estimate Δf = f<sub>c</sub>·v/c (no geometry) overstates the horizon Doppler by ~8–9 % for LEO; the R/r factor above is the standard correction. The satellite speed direction is perpendicular to its position vector (circular orbit), and the ground station is assumed stationary in the orbit plane — the geometry matches any pass projected onto the observer. Real TLE-based propagators (SGP4) add inclination and azimuth effects; this tool gives the worst-case/canonical pass for budget and receiver planning.</p>
+  </section>
+
+  <section class="panel prose" aria-label="Why LEO Doppler is large">
+    <h2>Why LEO Doppler is so large</h2>
+    <ul>
+      <li><strong>Speed × frequency.</strong> A LEO satellite moves at ~7.5 km/s. At UHF (437 MHz) that alone is ~10.9 kHz of Doppler; at X band (8.1 GHz) it is ~200 kHz — thousands of times wider than the Doppler of a GEO satellite, which barely moves relative to the ground.</li>
+      <li><strong>Geometry compresses the timescale.</strong> The radial velocity swings from +v·(R/r) at acquisition to −v·(R/r) at loss within a 10–15 minute pass, and it changes fastest when the satellite is at culmination — the peak rate reaches ~140 Hz/s at UHF for a 550 km overhead pass.</li>
+      <li><strong>Narrow channels feel it most.</strong> A 1.2 kHz NB-IoT or amateur CW channel is completely wiped out by an uncorrected UHF Doppler; even a 1 MHz broadband channel sees a 200 kHz sweep at S band, so every LEO receiver design starts from this table.</li>
+    </ul>
+  </section>
+
+  <section class="panel prose" aria-label="Receiver tracking design guidance">
+    <h2>Receiver frequency-tracking design guidance</h2>
+    <ol>
+      <li><strong>Size the search/tuning span.</strong> Pre-correct with two-line-element (TLE) predictions and still reserve a search window of at least ±(Δf<sub>max</sub> + prediction error); TLE-based residual error after a day or two is typically a few hundred Hz to a few kHz at UHF.</li>
+      <li><strong>Close the loop fast enough.</strong> The loop bandwidth must handle the peak rate (hundreds of Hz/s at UHF, several kHz/s at X band): a classic choice is a Type-2/Type-3 FLL-assisted PLL, or open-loop Doppler pre-correction from the pass prediction plus a narrow residual PLL.</li>
+      <li><strong>Rate, not just offset, drives the design.</strong> At culmination the frequency sweeps at maximum speed while the signal also peaks; if your loop can track the rate at culmination it can track the whole pass.</li>
+      <li><strong>Do the arithmetic in the right units.</strong> Doppler scales linearly with carrier frequency — compute once at a reference frequency and scale, but verify oscillator references (TCXO vs OCXO vs rubidium) since ground-station reference error adds directly to the residual.</li>
+    </ol>
+  </section>
+</main>
+
+<footer>
+  <div>Open-source tool · <a href="https://github.com/xiaokeni2/leo-doppler-calculator">GitHub repository</a></div>
+  <ul>
+    <li><a href="https://bridza.com/">BRIDZA — company overview</a></li>
+    <li><a href="https://rf.bridza.com/">BRIDZA RF — oscillators, timing and RF components</a></li>
+    <li><a href="https://rf.bridza.com/resources/glossary/doppler.html">Glossary: Doppler shift</a></li>
+    <li><a href="https://rf.bridza.com/resources/glossary/gnss-timing.html">Glossary: GNSS timing</a></li>
+    <li><a href="https://rf.bridza.com/resources/use-cases/satellite-ground-station-solutions.html">Satellite ground station solutions</a></li>
+  </ul>
+  <div style="margin-top:10px;">© BRIDZA · Free client-side engineering tool, no data leaves your browser.</div>
+</footer>
+</div>
+<script>
+(function () {
+  "use strict";
+  var RE = 6371;                 // km, mean Earth radius
+  var MU = 3.986004418e14;       // m^3/s^2
+  var C = 2.99792458e8;          // m/s
+
+  var altSel = document.getElementById("alt");
+  var altCustom = document.getElementById("altCustom");
+  var freqSel = document.getElementById("freq");
+  var freqCustom = document.getElementById("freqCustom");
+  var emaxEl = document.getElementById("emax");
+  var dfmaxEl = document.getElementById("dfmax");
+  var spanEl = document.getElementById("span");
+  var rateEl = document.getElementById("rate");
+  var velEl = document.getElementById("vel");
+  var perEl = document.getElementById("per");
+  var passEl = document.getElementById("pass");
+  var vradEl = document.getElementById("vrad");
+  var rhoEl = document.getElementById("rho");
+  var cmpBody = document.getElementById("cmpBody");
+  var statusEl = document.getElementById("status");
+  var curveBox = document.getElementById("curveBox");
+
+  function altKm() {
+    var c = parseFloat(altCustom.value);
+    return isNaN(c) ? parseFloat(altSel.value) : c;
+  }
+  function freqMHz() {
+    var c = parseFloat(freqCustom.value);
+    return isNaN(c) ? parseFloat(freqSel.value) : c;
+  }
+
+  function geom(hKm, emaxDeg) {
+    var r = RE + hKm;                    // km
+    var rm = r * 1000;                   // m
+    var v = Math.sqrt(MU / rm);          // m/s
+    var T = 2 * Math.PI * rm / v;        // s
+    var n = v / rm;                      // rad/s
+    var k = RE / r;                      // ratio
+    var E = Math.min(Math.max(emaxDeg, 5), 90) * Math.PI / 180;
+    var sinE = Math.sin(E), cosE = Math.cos(E);
+    var cosPsi = (RE * cosE * cosE + sinE * Math.sqrt(r * r - RE * RE * cosE * cosE)) / r;
+    cosPsi = Math.min(1, Math.max(cosPsi, k));
+    var psiM = Math.acos(cosPsi);
+    var rhoM = Math.sqrt(r * r + RE * RE - 2 * r * RE * cosPsi); // km, at culmination
+    var psiMax = Math.acos(k);           // horizon
+    var vRadMax = v * k;                 // m/s at E=0
+    // peak Doppler rate at culmination:
+    var A = 1 + k * k - 2 * k * cosPsi;
+    var g = (1 + k * k) * cosPsi - k * cosPsi * cosPsi - k;
+    var dvRad = v * n * k * g / Math.pow(A, 1.5); // m/s^2 at culmination
+    var tPass = 2 * (psiMax - psiM) / n; // s
+    return {
+      r: r, v: v, T: T, n: n, k: k,
+      psiM: psiM, psiMax: psiMax, rhoM: rhoM,
+      vRadMax: vRadMax, dvRadMax: Math.abs(dvRad), tPass: tPass
+    };
+  }
+
+  function fmtHz(hz) {
+    var a = Math.abs(hz);
+    if (a >= 1e6) return (hz / 1e6).toFixed(3) + " MHz";
+    if (a >= 1e3) return (hz / 1e3).toFixed(2) + " kHz";
+    return hz.toFixed(1) + " Hz";
+  }
+  function fmtRate(hzs) {
+    var a = Math.abs(hzs);
+    if (a >= 1e3) return (hzs / 1e3).toFixed(2) + " kHz/s";
+    return hzs.toFixed(1) + " Hz/s";
+  }
+  function dfOf(fcHz, g, vRad) { return fcHz * vRad / C; }
+
+  function svgCurve(g, fcHz) {
+    var W = 720, H = 240, padL = 66, padR = 16, padT = 14, padB = 34;
+    var fc = fcHz * 1e6;
+    var vmax = g.vRadMax;
+    var pts = [];
+    var N = 140;
+    for (var i = 0; i <= N; i++) {
+      var frac = i / N;                       // 0..1 over half pass
+      var psi = g.psiMax - frac * (g.psiMax - g.psiM); // horizon -> culmination
+      var rho = Math.sqrt(g.r * g.r + RE * RE - 2 * g.r * RE * Math.cos(psi));
+      var vr = g.v * RE * Math.sin(psi) / rho;
+      var t = frac * g.tPass / 2;
+      pts.push([t, fc * vr / C]);
+      if (i < N) pts.push([2 * g.tPass / 2 - t, fc * (-vr) / C]);
+    }
+    pts.sort(function (a, b) { return a[0] - b[0]; });
+    var ymax = Math.abs(fc * vmax / C) * 1.08;
+    var xmax = g.tPass * 1.02;
+    function X(t) { return padL + (t / xmax) * (W - padL - padR); }
+    function Y(v) { return H - padB - ((v + ymax) / (2 * ymax)) * (H - padT - padB); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Doppler shift versus time during one pass">';
+    s += '<rect width="' + W + '" height="' + H + '" fill="#0d1117"/>';
+    for (var gi = 1; gi <= 4; gi++) {
+      var gy = padT + gi * (H - padT - padB) / 4;
+      s += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#21262d"/>';
+    }
+    s += '<line x1="' + padL + '" y1="' + Y(0) + '" x2="' + (W - padR) + '" y2="' + Y(0) + '" stroke="#30363d"/>';
+    s += '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" stroke="#30363d"/>';
+    s += '<text x="' + (padL - 6) + '" y="' + (Y(ymax) + 4) + '" fill="#8b949e" font-size="11" font-family="monospace" text-anchor="end">+' + fmtHz(ymax) + '</text>';
+    s += '<text x="' + (padL - 6) + '" y="' + (Y(0) + 4) + '" fill="#8b949e" font-size="11" font-family="monospace" text-anchor="end">0</text>';
+    s += '<text x="' + (padL - 6) + '" y="' + (Y(-ymax) + 4) + '" fill="#8b949e" font-size="11" font-family="monospace" text-anchor="end">-' + fmtHz(ymax) + '</text>';
+    var d = "";
+    for (var j = 0; j < pts.length; j++) {
+      d += (j === 0 ? "M" : "L") + X(pts[j][0]).toFixed(1) + "," + Y(pts[j][1]).toFixed(1);
+    }
+    s += '<path d="' + d + '" fill="none" stroke="#58a6ff" stroke-width="2"/>';
+    s += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" fill="#8b949e" font-size="12" font-family="monospace" text-anchor="middle">time from acquisition (s, pass ≈ ' + (g.tPass / 60).toFixed(1) + ' min)</text>';
+    s += '<text x="14" y="' + (H / 2) + '" fill="#8b949e" font-size="12" font-family="monospace" text-anchor="middle" transform="rotate(-90 14 ' + (H / 2) + ')">Δf</text>';
+    s += '</svg>';
+    return s;
+  }
+
+  function calc() {
+    var h = altKm(), fc = freqMHz(), emax = parseFloat(emaxEl.value);
+    if (isNaN(h) || h < 100 || h > 2000) {
+      statusEl.textContent = "Altitude must be 100–2000 km for this LEO model.";
+      return;
+    }
+    if (isNaN(fc) || fc <= 0) {
+      statusEl.textContent = "Enter a valid carrier frequency.";
+      return;
+    }
+    if (isNaN(emax) || emax < 5 || emax > 90) {
+      statusEl.textContent = "Maximum elevation must be 5–90 degrees.";
+      return;
+    }
+    statusEl.textContent = "";
+    var g = geom(h, emax);
+    var fcHz = fc * 1e6;
+    var dfMax = fcHz * g.vRadMax / C;
+    var rateMax = fcHz * g.dvRadMax / C;
+
+    dfmaxEl.textContent = fmtHz(dfMax);
+    spanEl.textContent = fmtHz(2 * dfMax) + " total sweep";
+    rateEl.textContent = fmtRate(rateMax) + " (" + (rateMax * 60 / 1000).toFixed(2) + " kHz/min)";
+    velEl.textContent = (g.v / 1000).toFixed(3) + " km/s";
+    perEl.textContent = (g.T / 60).toFixed(2) + " min";
+    passEl.textContent = (g.tPass / 60).toFixed(1) + " min";
+    vradEl.textContent = (g.vRadMax / 1000).toFixed(3) + " km/s";
+    rhoEl.textContent = g.rhoM.toFixed(0) + " km";
+
+    curveBox.innerHTML = svgCurve(g, fc);
+
+    // comparison table
+    var html = "";
+    [400, 550, 600, 800, 1200].forEach(function (hh) {
+      var gg = geom(hh, emax);
+      var d = fcHz * gg.vRadMax / C;
+      var rt = fcHz * gg.dvRadMax / C;
+      html += "<tr><td>" + hh + "</td><td>" + (gg.v / 1000).toFixed(3) + "</td><td>" + (gg.T / 60).toFixed(1) +
+        "</td><td>" + fmtHz(d) + "</td><td>" + fmtRate(rt) + "</td><td>" + (gg.tPass / 60).toFixed(1) + "</td></tr>";
+    });
+    cmpBody.innerHTML = html;
+  }
+
+  [altSel, freqSel, emaxEl].forEach(function (el) { el.addEventListener("input", calc); el.addEventListener("change", calc); });
+  [altCustom, freqCustom].forEach(function (el) { el.addEventListener("input", calc); });
+  calc();
+})();
+</script>
+</body>
+</html>
